@@ -81,7 +81,7 @@
 <body>
 <canvas id="c"></canvas>
 <div id="frame"></div>
-<div id="hud">WASD / arrows: walk &nbsp;·&nbsp; drag: look (double-click locks mouse, Esc frees) &nbsp;·&nbsp; Space / Q: up / down &nbsp;·&nbsp; Shift: run<br>Click a guest to poke them · Click the tumbler to buy</div>
+<div id="hud">WASD / arrows: walk &nbsp;·&nbsp; drag: look (double-click locks mouse, Esc frees) &nbsp;·&nbsp; Space / Q: up / down &nbsp;·&nbsp; Shift: run<br>Click a guest to poke them · Click the floating crystal tumbler for a drink · Click the pizza girl for pizza</div>
 <div id="chat"></div>
 <div id="toasts"></div>
 <div id="hands"><canvas id="handL"></canvas><canvas id="handR"></canvas></div>
@@ -523,9 +523,9 @@ function build(){
   addChar('sitter',3.6,SFX_+5,SFZ+1,{still:true,name:'BayBreezeBabe'});
   // bars
   const bt=tex(brickTex(),[3,1]);
-  [[-30,4,Math.PI/2],[14,-64,0]].forEach(([x,z,r])=>{BARS.push({x,z});{const gt=TC('stglass',()=>stickerTex('glass',{border:10}));const lg=new THREE.Sprite(new THREE.SpriteMaterial({map:gt.t,transparent:true}));lg.scale.set(4.2*gt.aspect,4.2,1);lg.position.set(x,8.5,z);lg.userData.noDark=true;scene.add(lg);floaters.push({o:lg,kind:'drift',base:8.5,ph:R(0,6)});const pt=priceTex('$ 5.00EUR');const pm=new THREE.Sprite(new THREE.SpriteMaterial({map:pt.t,transparent:true}));pm.scale.set(1.4*pt.aspect,1.4,1);pm.position.set(x,11.4,z);pm.userData.noDark=true;scene.add(pm);}const b=new THREE.Mesh(new THREE.BoxGeometry(14,2.4,2.2),basic(bt));b.position.set(x,1.2,z);b.rotation.y=r;scene.add(b);
+  [[-30,4,Math.PI/2],[14,-64,0]].forEach(([x,z,r])=>{BARS.push({x,z});{const gt=TC('stglass',()=>stickerTex('glass',{border:10}));const lg=new THREE.Sprite(new THREE.SpriteMaterial({map:gt.t,transparent:true}));lg.scale.set(4.6*gt.aspect,4.6,1);lg.position.set(x,7.2,z);lg.userData={noDark:true,key:'barlogo',h:4.6};scene.add(lg);clickables.push(lg);BARLOGOS.push(lg);floaters.push({o:lg,kind:'drift',base:7.2,ph:R(0,6)});const pt=priceTex('$ 5.00EUR');const pm=new THREE.Sprite(new THREE.SpriteMaterial({map:pt.t,transparent:true}));pm.scale.set(1.4*pt.aspect,1.4,1);pm.position.set(x,10.3,z);pm.userData.noDark=true;scene.add(pm);}const b=new THREE.Mesh(new THREE.BoxGeometry(14,2.4,2.2),basic(bt));b.position.set(x,1.2,z);b.rotation.y=r;scene.add(b);
     const top=new THREE.Mesh(new THREE.BoxGeometry(14.4,.3,2.6),basic(tex(woodTex(),[3,1])));top.position.set(x,2.5,z);top.rotation.y=r;scene.add(top);
-    addChar('bartender',2.6,x+Math.sin(r)*-2,z+Math.cos(r)*-2,{still:true});addProp('juice',1.6,x+R(-2,2),2.65+.8,z,{sit:true});addProp('glass',1.6,x+R(-4,4),2.65+.8,z,{sit:true});});
+    {const bt_=addChar('bartender',2.6,x+Math.sin(r)*-2,z+Math.cos(r)*-2,{still:true});BARLOGOS[BARLOGOS.length-1].userData.bartender=bt_;}addProp('juice',1.6,x+R(-2,2),2.65+.8,z,{sit:true});addProp('glass',1.6,x+R(-4,4),2.65+.8,z,{sit:true});});
   // silver curtains in the far corners
   const cur=tex(curtainTex(),[3,1]);[[-HX+7,-HZ+.6,0,14],[HX-14,-HZ+.6,0,10]].forEach(([x,z,r,w])=>{const m=plane(cur,w,WALLH-2);m.position.set(x,WALLH/2,z);m.rotation.y=r;scene.add(m);});
   const sh=headTex(["YOU BE THE STAR!"]);const shm=plane(sh.t,24,24/sh.aspect,{transparent:true});shm.position.set(6,WALLH-6,-HZ+.7);scene.add(shm);
@@ -692,7 +692,7 @@ document.getElementById('svClose').onclick=()=>{document.getElementById('survey'
 const HMETA={"h_box": {}, "h_slice": {"tip": [0.005016722408026756, 0.34476843910806176], "crust": [0.25668896321070234, 0.09176672384219554]}, "h_drink": {"bowl": [0.005371530886302597, 0.003526093088857546, 0.333034914950761, 0.14104372355430184]}, "h_mango": {"bowl": [0.014809041309431021, 0.004929577464788733, 0.3000779423226812, 0.14225352112676057]}};
 const HANDS={active:false,type:null,mango:false,used:0,total:0,busy:false};
 const handsEl=document.getElementById('hands'),hL=document.getElementById('handL'),hR=document.getElementById('handR'),hint=document.getElementById('handHint');
-let orderOpen=false;const BARS=[];
+let orderOpen=false;const BARS=[];const BARLOGOS=[];
 function fitCanvas(c,im){c.width=im.width;c.height=im.height;}
 function drawHands(){
   const gL=hL.getContext('2d'),gR=hR.getContext('2d');
@@ -756,7 +756,7 @@ canvas.addEventListener('dblclick',()=>{try{const p=canvas.requestPointerLock();
 document.addEventListener('pointerlockchange',()=>{document.getElementById('cross').style.display=document.pointerLockElement===canvas?'block':'none';});
 const ray=new THREE.Raycaster();
 function poke(x,y){if(HANDS.active){consume();return;}if(orderOpen)return;ray.setFromCamera({x,y},camera);const hit=ray.intersectObjects(clickables)[0];if(!hit)return;const sp=hit.object;
-  if(sp.userData.key==='glass'||sp.userData.key==='bartender'){openOrder('drink',sp.userData.key==='bartender'?sp:null);return;}
+  if(sp.userData.key==='barlogo'||sp.userData.key==='glass'){openOrder('drink',sp.userData.bartender||null);return;}
   if(sp.userData.key==='catpizza'&&!sp.userData.giant){openOrder('pizza',sp);return;}
   if(sp.userData.prop){const it=ITEMS.find(i=>i[0]===sp.userData.key)||ITEMS[0];const p=pick(PRICES);toast(it[0],it[1],p);addCash(parseFloat(p.replace(/[^0-9.]/g,''))||1);priceBurst(sp.position.clone().add(new THREE.Vector3(0,sp.userData.h/2,0)),8);}
   else{say(sp,pick(["Hey!!","Don't poke me","Give me your left foot!","Shake me a little I can't believe it's him","One second I'm busy","Got it!","TURN TURN TURN woo","Who are YOU"]));chatMsg(sp.userData.name,pick(["someone just poked me","stop clicking me","lol hi","@"+pick(NAMES)+" look who's here"]));priceBurst(sp.position.clone().add(new THREE.Vector3(0,sp.userData.h/2,0)),3);}
@@ -783,7 +783,7 @@ function tick(){
   const run=keys.ShiftLeft||keys.ShiftRight?2.2:1;const sp=12*run;
   let fx=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joyVec.y;
   let sx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joyVec.x;
-  let up=(keys.Space||keys.KeyE?1:0)-(keys.KeyQ||keys.KeyC?1:0);
+  let up=(keys.Space?1:0)-(keys.KeyQ||keys.KeyC?1:0);
   const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),r=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
   const target=f.multiplyScalar(fx*sp).add(r.multiplyScalar(sx*sp));target.y=up*sp*.7;
   vel.lerp(target,1-Math.pow(.001,dt));camera.position.addScaledVector(vel,dt);
@@ -808,7 +808,7 @@ function tick(){
       m.position.set(u.sp.position.x+u.dx,u.sp.position.y+u.sp.userData.h*.5+u.h*.5+u.t*.25,u.sp.position.z);}
     const fade=u.life-u.t;m.material.opacity=Math.min(1,fade/.5);
     if(u.t>u.life){scene.remove(m);m.material.map.dispose();m.material.dispose();bubbles.splice(i,1);}}
-  if(started){chaos(t);checkProx(t);}
+  if(started){chaos(t);}
   if(HANDS.active&&!HANDS.busy){const sp=Math.min(1,Math.hypot(vel.x,vel.z)/12)||0;handsEl.style.transform=`translate(${Math.sin(t*9)*sp*10}px,${Math.abs(Math.cos(t*9))*sp*14}px)`;}
   renderer.render(scene,camera);requestAnimationFrame(tick);
 }
